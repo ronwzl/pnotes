@@ -19,6 +19,8 @@
 \ProcessKeyvalOptions*
 
 \newwrite\pdfpcnotesfile
+\newwrite\pdfpcendfile
+\newread\pdfpcendfilein
 
 \AtBeginDocument{%
     \immediate\openout\pdfpcnotesfile\jobname.pdfpc\relax
@@ -33,6 +35,13 @@
         \ifnum\pnotes@endslide>0
             \immediate\write\pdfpcnotesfile{[end_user_slide]}
             \immediate\write\pdfpcnotesfile{\pnotes@endslide}
+        \else
+            \IfFileExists{\jobname.pce}{%
+                \immediate\openin\pdfpcendfilein=\jobname.pce\relax
+                \immediate\read\pdfpcendfilein to \pnotes@endslide
+                \immediate\write\pdfpcnotesfile{[end_user_slide]}
+                \immediate\write\pdfpcnotesfile{\pnotes@endslide}
+            }{}
         \fi
     \fi
 
@@ -70,6 +79,12 @@
 
 \newcommand{\pnote}[1]{
     \only<1>{\pnotewritenote{#1}}
+}
+
+\newcommand{\plastslide}{%
+    \immediate\openout\pdfpcendfile\jobname.pce\relax%
+    \immediate\write\pdfpcendfile{\theframenumber}%
+    \immediate\closeout\pdfpcendfile%
 }
 
 % close file on \begin{document}
