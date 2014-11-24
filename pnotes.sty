@@ -90,5 +90,6 @@
 % close file on \begin{document}
 \AtEndDocument{%
     \immediate\closeout\pdfpcnotesfile
+    \immediate\write18{iconv --output="bin/\jobname.pdfpc" --from-code=ISO_8859-15 --to-code=UTF-8 "bin/\jobname.pdfpc"}
 }
 
