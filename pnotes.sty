@@ -1,0 +1,74 @@
+
+
+
+% http://tex.stackexchange.com/questions/119191/extract-all-note-tags-from-beamer-as-a-simple-text-file
+
+
+
+
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{pnotes}[2014/11/02 PDFPC Notes]
+
+
+\RequirePackage{xstring}
+\RequirePackage{ifthen}
+\RequirePackage{kvoptions}
+
+\DeclareStringOption[0]{duration}
+\ProcessKeyvalOptions*
+
+\newwrite\pdfpcnotesfile
+
+\AtBeginDocument{%
+    \immediate\openout\pdfpcnotesfile\jobname.pdfpc\relax
+    \immediate\write\pdfpcnotesfile{[file]}
+    \immediate\write\pdfpcnotesfile{\jobname.pdf}
+
+    \ifcsname pnotes@duration\endcsname
+        \ifnum\pnotes@duration>0
+            \immediate\write\pdfpcnotesfile{[duration]}
+            \immediate\write\pdfpcnotesfile{\pnotes@duration}
+        \fi
+    \fi
+
+    \immediate\write\pdfpcnotesfile{[notes]}
+}
+\begingroup
+    \catcode`\#=12
+    \gdef\hashchar{#}%
+\endgroup
+
+
+\newcount\pnotelastframe
+\pnotelastframe=0
+
+\newcommand{\SetPnoteDuration}[1]{
+    \newcommand{\pnoteduration}{#1}
+}
+
+\newcommand{\pnotewritenote}[1]{%
+    \ifnum\value{framenumber}=\pnotelastframe\else
+        \immediate\write\pdfpcnotesfile{\hashchar\hashchar\hashchar \theframenumber}%
+    \fi
+    %\immediate\write\pdfpcnotesfile{\unexpanded{#1}}%
+
+    \expandarg%
+    \StrSubstitute{\unexpanded{#1}}{\unexpanded{\par}}{\unexpanded{\\\\}}[\rRest]
+    \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
+    \whiledo{\not\equal{\rFirst\rRest}{}}{%
+        \immediate\write\pdfpcnotesfile{\rFirst}%
+        \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
+    }
+
+    \pnotelastframe=\value{framenumber}
+}
+
+\newcommand{\pnote}[1]{
+    \only<1>{\pnotewritenote{- #1}}
+}
+
+% close file on \begin{document}
+\AtEndDocument{%
+    \immediate\closeout\pdfpcnotesfile
+}
+
