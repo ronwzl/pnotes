@@ -16,6 +16,7 @@
 
 \DeclareStringOption[0]{duration}
 \DeclareStringOption[0]{endslide}
+\DeclareStringOption[.]{outputdir}
 \ProcessKeyvalOptions*
 
 \newwrite\pdfpcnotesfile
@@ -90,6 +91,6 @@
 % close file on \begin{document}
 \AtEndDocument{%
     \immediate\closeout\pdfpcnotesfile
-    \immediate\write18{iconv --output="bin/\jobname.pdfpc" --from-code=ISO_8859-15 --to-code=UTF-8 "bin/\jobname.pdfpc"}
+    \immediate\write18{iconv --output="\pnotes@outputdir/\jobname.pdfpc" --from-code=ISO_8859-15 --to-code=UTF-8 "\pnotes@outputdir/\jobname.pdfpc"}
 }
 
