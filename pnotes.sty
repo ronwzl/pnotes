@@ -15,6 +15,7 @@
 \RequirePackage{kvoptions}
 
 \DeclareStringOption[0]{duration}
+\DeclareStringOption[0]{endslide}
 \ProcessKeyvalOptions*
 
 \newwrite\pdfpcnotesfile
@@ -28,6 +29,10 @@
         \ifnum\pnotes@duration>0
             \immediate\write\pdfpcnotesfile{[duration]}
             \immediate\write\pdfpcnotesfile{\pnotes@duration}
+        \fi
+        \ifnum\pnotes@endslide>0
+            \immediate\write\pdfpcnotesfile{[end_user_slide]}
+            \immediate\write\pdfpcnotesfile{\pnotes@endslide}
         \fi
     \fi
 
