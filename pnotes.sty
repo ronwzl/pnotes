@@ -70,9 +70,13 @@
     \expandarg%
     \StrSubstitute{\unexpanded{#1}}{\unexpanded{\par}}{\unexpanded{\\\\}}[\rRest]
     \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
-    \whiledo{\not\equal{\rFirst\rRest}{}}{%
+    \StrLen{\rFirst}[\lenFirst]
+    \StrLen{\rRest}[\lenRest]
+    \whiledo{\lenFirst > 0 \or \lenRest > 0}{%
         \immediate\write\pdfpcnotesfile{- \rFirst}%
         \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
+        \StrLen{\rFirst}[\lenFirst]
+        \StrLen{\rRest}[\lenRest]
     }
 
     \pnotelastframe=\value{framenumber}
