@@ -52,7 +52,7 @@
 % We want to be able to output # characters
 \begingroup%
     \catcode`\#=12%
-    \gdef\hashchar{#}%
+    \gdef\slidestart{### }%
 \endgroup
 
 % counter to remember the last frame in which we outputted something
@@ -67,7 +67,7 @@
 \newcommand{\pnotewritenote}[1]{%
     % Only write current slide number iff it changed since the last write
     \ifnum\value{framenumber}=\pnotelastframe\else%
-        \immediate\write\pdfpcnotesfile{\hashchar\hashchar\hashchar \theframenumber}%
+        \immediate\write\pdfpcnotesfile{\slidestart\theframenumber}%
     \fi%
 %
     \expandarg%
