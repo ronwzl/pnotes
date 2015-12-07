@@ -72,7 +72,7 @@
     \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
     \StrLen{\rFirst}[\lenFirst]
     \StrLen{\rRest}[\lenRest]
-    \whiledo{\lenFirst > 0 \or \lenRest > 0}{%
+    \whiledo{\lenFirst > 0 \OR \lenRest > 0}{%
         \immediate\write\pdfpcnotesfile{- \rFirst}%
         \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
         \StrLen{\rFirst}[\lenFirst]
