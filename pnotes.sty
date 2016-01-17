@@ -1,7 +1,28 @@
-% This is based upon http://tex.stackexchange.com/questions/119191/extract-all-note-tags-from-beamer-as-a-simple-text-file
+%%
+%% This is file `pnotes.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% pnotes.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2014-2016 by rwen, jonasc
+%% 
+%% This file may be distributed and/or modified under the conditions of the
+%% Creative Commons Attribution-ShareAlike 3.0 Unported License.
+%% The license can be found in LICENSE and on:
+%% 
+%%     https://creativecommons.org/licenses/by-sa/3.0/
+%% 
 
 \NeedsTeXFormat{LaTeX2e}[1994/06/01]
-\ProvidesPackage{pnotes}[2014/11/02 PDFPC Notes]
+\ProvidesPackage{pnotes}[2016/01/17 v1.0 pdfpc presentation notes]
+
+
+
+
 
 
 \RequirePackage{xstring}
@@ -13,99 +34,73 @@
 \DeclareStringOption[.]{outputdir}
 \ProcessKeyvalOptions*
 
-\newwrite\pdfpcnotesfile
-\newwrite\pdfpcendfile
-\newread\pdfpcendfilein
+\newwrite\pnotes@output
+\newwrite\pnotes@endslideout
+\newread\pnotes@endslidein
 
 \AtBeginDocument{%
-    % Open pdfpc file and write metadata
-    \immediate\openout\pdfpcnotesfile\jobname.pdfpc\relax%
-    \immediate\write\pdfpcnotesfile{[file]}%
-    \immediate\write\pdfpcnotesfile{\jobname.pdf}%
-%
-    \ifcsname pnotes@duration\endcsname%
-        \ifnum\pnotes@duration>0%
-            % The user specified how long the presentation should take
-            \immediate\write\pdfpcnotesfile{[duration]}%
-            \immediate\write\pdfpcnotesfile{\pnotes@duration}%
-        \fi%
-        \ifnum\pnotes@endslide>0%
-            % We are given a specific slide number via options
-            \immediate\write\pdfpcnotesfile{[end_user_slide]}%
-            \immediate\write\pdfpcnotesfile{\pnotes@endslide}%
-        \else%
-            % If the pce file is written it contains the number of the last
-            % slide to be counted -- write it into the pdfpc file
-            \IfFileExists{\jobname.pce}{%
-                \immediate\openin\pdfpcendfilein=\jobname.pce\relax%
-                \immediate\read\pdfpcendfilein to \pnotes@endslide%
-                \immediate\write\pdfpcnotesfile{[end_user_slide]}%
-                \immediate\write\pdfpcnotesfile{\pnotes@endslide}%
-            }{}%
-        \fi%
+    \immediate\openout\pnotes@output\jobname.pdfpc\relax%
+    \immediate\write\pnotes@output{[file]}%
+    \immediate\write\pnotes@output{\jobname.pdf}%
+    \ifnum\pnotes@duration>0%
+        \immediate\write\pnotes@output{[duration]}%
+        \immediate\write\pnotes@output{\pnotes@duration}%
     \fi%
-%
-    % Begin with the notes themselves
-    \immediate\write\pdfpcnotesfile{[notes]}%
-}
-
-% We want to be able to output # characters
-\begingroup%
-    \catcode`\#=12%
-    \gdef\slidestart{### }%
-\endgroup
-
-% counter to remember the last frame in which we outputted something
-\newcount\pnotelastframe
-\pnotelastframe=0
-
-\newcommand{\SetPnoteDuration}[1]{%
-    \newcommand{\pnoteduration}{#1}%
-}
-
-% Used by \pnote to actually write the note into the pdfpc file
-\newcommand{\pnotewritenote}[1]{%
-    % Only write current slide number iff it changed since the last write
-    \ifnum\value{framenumber}=\pnotelastframe\else%
-        \immediate\write\pdfpcnotesfile{\slidestart\theframenumber}%
+    \ifnum\pnotes@endslide>0%
+        \immediate\write\pnotes@output{[end_user_slide]}%
+        \immediate\write\pnotes@output{\pnotes@endslide}%
+    \else%
+        \IfFileExists{\jobname.pce}{%
+            \immediate\openin\pnotes@endslidein=\jobname.pce\relax%
+            \immediate\read\pnotes@endslidein to \pnotes@endslide%
+            \immediate\write\pnotes@output{[end_user_slide]}%
+            \immediate\write\pnotes@output{\pnotes@endslide}%
+        }{}%
     \fi%
-%
-    \expandarg%
-    % Replace all paragraphs by double line breaks
-    \StrSubstitute{\unexpanded{#1}}{\unexpanded{\par}}{\unexpanded{\\\\}}[\rRest]%
-    % Cut note at line break
-    \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
-    \StrLen{\rFirst}[\lenFirst]%
-    \StrLen{\rRest}[\lenRest]%
-    % While we do have something to output
-    \whiledo{\lenFirst > 0 \OR \lenRest > 0}{%
-        % Write it to our file with a preceding "- "
-        \immediate\write\pdfpcnotesfile{- \rFirst}%
-        % Cut remaining note at line break
-        \StrCut{\rRest}{\unexpanded{\\}}\rFirst\rRest%
-        \StrLen{\rFirst}[\lenFirst]%
-        \StrLen{\rRest}[\lenRest]%
-    }%
-%
-    % Update the last seen slide
-    \pnotelastframe=\value{framenumber}%
+    \immediate\write\pnotes@output{[notes]}%
 }
 
-% This should be used by the user -- outputs the note excatly once
-\newcommand{\pnote}[1]{%
-    \only<1>{\pnotewritenote{#1}}%
-}
-
-% This command can be used on any slide to indicate that it is the last to be
-% counted by pdfpc
-\newcommand{\plastslide}{%
-    \immediate\openout\pdfpcendfile\jobname.pce\relax%
-    \immediate\write\pdfpcendfile{\theframenumber}%
-    \immediate\closeout\pdfpcendfile%
-}
-
-% close file on \end{document}
 \AtEndDocument{%
-    \immediate\closeout\pdfpcnotesfile%
+    \immediate\closeout\pnotes@output%
     \immediate\write18{iconv --output="\pnotes@outputdir/\jobname.pdfpc" --from-code=ISO_8859-15 --to-code=UTF-8 "\pnotes@outputdir/\jobname.pdfpc"}%
 }
+
+\begingroup%
+    \catcode`\#=12%
+    \gdef\pnotes@slidestart{### }%
+\endgroup
+
+\newcount\pnotes@lastframe
+\pnotes@lastframe=0
+
+\newcommand{\pnote@writenote}[1]{%
+    \ifnum\value{framenumber}=\pnotes@lastframe\else%
+        \immediate\write\pnotes@output{\pnotes@slidestart\theframenumber}%
+    \fi%
+    \expandarg%
+    \StrSubstitute{\unexpanded{#1}}{\unexpanded{\par}}{\unexpanded{\\\\}}[\pnotes@rest]%
+    \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
+    \StrLen{\pnotes@first}[\pnotes@lenFrist]%
+    \StrLen{\pnotes@rest}[\pnotes@lenRest]%
+    \whiledo{\pnotes@lenFrist > 0 \OR \pnotes@lenRest > 0}{%
+        \immediate\write\pnotes@output{- \pnotes@first}%
+        \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
+        \StrLen{\pnotes@first}[\pnotes@lenFrist]%
+        \StrLen{\pnotes@rest}[\pnotes@lenRest]%
+    }%
+    \pnotes@lastframe=\value{framenumber}%
+}
+
+\newcommand{\pnote}[1]{%
+    \only<1>{\pnote@writenote{#1}}%
+}
+
+\newcommand{\plastslide}{%
+    \immediate\openout\pnotes@endslideout\jobname.pce\relax%
+    \immediate\write\pnotes@endslideout{\theframenumber}%
+    \immediate\closeout\pnotes@endslideout%
+}
+
+\endinput
+%%
+%% End of file `pnotes.sty'.

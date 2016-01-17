@@ -1,0 +1,233 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2014-2016 by rwen, jonasc
+%
+% This file may be distributed and/or modified under the conditions of the
+% Creative Commons Attribution-ShareAlike 3.0 Unported License.
+% The license can be found in LICENSE and on:
+%
+%     https://creativecommons.org/licenses/by-sa/3.0/
+%
+% \fi
+
+% \iffalse
+%<package>\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+%<package>\ProvidesPackage{pnotes}[2016/01/17 v1.0 pdfpc presentation notes]
+%<*driver>
+\documentclass[a4paper]{ltxdoc}
+\usepackage{pnotes}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+    \DocInput{pnotes.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+% \changes{v0.1}{2014/11/02}{Initial version}
+% \changes{v1.0}{2016/01/17}{Create .dtx and .ins file}
+
+% \GetFileInfo{pnots.sty}
+
+% \title{The \textsf{pnotes} package\thanks{
+%     This document corresponds to \textsf{pnotes}~\fileversion,
+%     dated~\filedate.}}
+% \author{jonasc \\ \texttt{github@bcdf.eu}}
+
+% \maketitle
+
+% \begin{abstract}
+% When writing \LaTeX{} presentations with the \textsf{beamer} class and displaying them with the \textsf{pdfpc}\footnote{\url{https://pdfpc.github.io/}} tool one wants to be able to add meta information to the \LaTeX{} source which is then displayed inside \textsf{pdfpc}.
+% This package aims to close exactly this gap.
+% \end{abstract}
+
+% \StopEventually{\PrintChanges\PrintIndex}
+%
+% \section{Implementation}
+
+% We first need to import three packages for string manipulation, easier conditionals and key-value options.
+%    \begin{macrocode}
+\RequirePackage{xstring}
+\RequirePackage{ifthen}
+\RequirePackage{kvoptions}
+%    \end{macrocode}
+
+% \subsection{Package options}
+% The package accepts three different options.
+% First of all you can set the desired presentation \meta{duration}  which is used by \textsf{pdfpc} to display a timer counting down instead of up.
+%
+% The second option is to specify an \meta{endslide} that is the number of the slide which should be treated as the last one.
+% This should usually not be encoded directly but determined dynamically by using |\plastslide| in the corresponding frame.
+%
+% The third option specifies the \meta{outputdir}, the folder all the temporary files are written to by the \LaTeX{} compiler.
+% Since there is no automatic way of determining this it must be given if it differs from the standard which is the current directory.
+%    \begin{macrocode}
+\DeclareStringOption[0]{duration}
+\DeclareStringOption[0]{endslide}
+\DeclareStringOption[.]{outputdir}
+\ProcessKeyvalOptions*
+%    \end{macrocode}
+
+% \subsection{External files}
+% Since we are going to write a \textsf{pdfpc} file and an additional help file we need some file handles.
+%    \begin{macrocode}
+\newwrite\pnotes@output
+\newwrite\pnotes@endslideout
+\newread\pnotes@endslidein
+%    \end{macrocode}
+
+% Before the document actually starts we open the \textsf{pdfpc} file handle.
+%    \begin{macrocode}
+\AtBeginDocument{%
+    \immediate\openout\pnotes@output\jobname.pdfpc\relax%
+%    \end{macrocode}
+%
+% The first thing to write is the name of the corresponding pdf file.
+%    \begin{macrocode}
+    \immediate\write\pnotes@output{[file]}%
+    \immediate\write\pnotes@output{\jobname.pdf}%
+%    \end{macrocode}
+%
+% If the \meta{duration} option is specified by the user and positive we write its value.
+%    \begin{macrocode}
+    \ifnum\pnotes@duration>0%
+        \immediate\write\pnotes@output{[duration]}%
+        \immediate\write\pnotes@output{\pnotes@duration}%
+    \fi%
+%    \end{macrocode}
+%
+% If the \meta{endslide} option is given and positive we output its value.
+% This means that the user wants the end slide to be hard coded.
+%    \begin{macrocode}
+    \ifnum\pnotes@endslide>0%
+        \immediate\write\pnotes@output{[end_user_slide]}%
+        \immediate\write\pnotes@output{\pnotes@endslide}%
+    \else%
+%    \end{macrocode}
+%
+% In case the \meta{endslide} option is not given we try to read it from an helper |.pce| file.
+% This is the file in which the end slide's number is written when using |\plastslide|.
+%    \begin{macrocode}
+        \IfFileExists{\jobname.pce}{%
+            \immediate\openin\pnotes@endslidein=\jobname.pce\relax%
+            \immediate\read\pnotes@endslidein to \pnotes@endslide%
+            \immediate\write\pnotes@output{[end_user_slide]}%
+            \immediate\write\pnotes@output{\pnotes@endslide}%
+        }{}%
+    \fi%
+%    \end{macrocode}
+%
+% Now we begin with the contents of the notes themselves.
+%    \begin{macrocode}
+    \immediate\write\pnotes@output{[notes]}%
+}
+%    \end{macrocode}
+
+% At the end of the \LaTeX{} file we close the \textsf{pdfpc} file and convert it to UTF-8.
+%    \begin{macrocode}
+\AtEndDocument{%
+    \immediate\closeout\pnotes@output%
+    \immediate\write18{iconv --output="\pnotes@outputdir/\jobname.pdfpc" --from-code=ISO_8859-15 --to-code=UTF-8 "\pnotes@outputdir/\jobname.pdfpc"}%
+}
+%    \end{macrocode}
+
+% \subsection{Being able to output \#}
+% Before beginning slide comments we need to output |### <frame number>|.
+% We therefore reset the category code of |#| to \emph{other}\footnote{\url{https://en.wikibooks.org/wiki/TeX/catcode}} and then globally define a command which outputs |### | (three hash marks followed by one space).
+%    \begin{macrocode}
+\begingroup%
+    \catcode`\#=12%
+    \gdef\pnotes@slidestart{### }%
+\endgroup
+%    \end{macrocode}
+
+% \subsection{Counters}
+% Since \textsf{pdfpc} does not work with multiple slide starts of the same slide number we need one counter to remember the last slide we wrote some comments.
+%    \begin{macrocode}
+\newcount\pnotes@lastframe
+\pnotes@lastframe=0
+%    \end{macrocode}
+
+% \subsection{Writing notes to the file}
+% The following command actually writes a note to the output file.
+%    \begin{macrocode}
+\newcommand{\pnote@writenote}[1]{%
+%    \end{macrocode}
+%
+% Only write the current slide number iff it changed since the last write.
+%    \begin{macrocode}
+    \ifnum\value{framenumber}=\pnotes@lastframe\else%
+        \immediate\write\pnotes@output{\pnotes@slidestart\theframenumber}%
+    \fi%
+%    \end{macrocode}
+%
+% Replace all paragraphs in the given text by double line breaks.
+%    \begin{macrocode}
+    \expandarg%
+    \StrSubstitute{\unexpanded{#1}}{\unexpanded{\par}}{\unexpanded{\\\\}}[\pnotes@rest]%
+%    \end{macrocode}
+%
+% Split the text at the first line break and record the length of both parts.
+%    \begin{macrocode}
+    \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
+    \StrLen{\pnotes@first}[\pnotes@lenFrist]%
+    \StrLen{\pnotes@rest}[\pnotes@lenRest]%
+%    \end{macrocode}
+%
+% While there is still something left to output we output the first part and then split the rest up just like before.
+%    \begin{macrocode}
+    \whiledo{\pnotes@lenFrist > 0 \OR \pnotes@lenRest > 0}{%
+        \immediate\write\pnotes@output{- \pnotes@first}%
+        \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
+        \StrLen{\pnotes@first}[\pnotes@lenFrist]%
+        \StrLen{\pnotes@rest}[\pnotes@lenRest]%
+    }%
+%    \end{macrocode}
+%
+% Save the current frame so we won't output its number twice.
+%    \begin{macrocode}
+    \pnotes@lastframe=\value{framenumber}%
+}
+%    \end{macrocode}
+
+% \subsection{The user macros}
+% \begin{macro}{\pnote}
+% This macro is used to output comments to the current frame.
+% We use |\only<1>| to have it output exactly once.
+%    \begin{macrocode}
+\newcommand{\pnote}[1]{%
+    \only<1>{\pnote@writenote{#1}}%
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\plastslide}
+% This macro should be put on the last regular slide.
+% It is then output as the last slide for \textsf{pdfpc}.
+%    \begin{macrocode}
+\newcommand{\plastslide}{%
+    \immediate\openout\pnotes@endslideout\jobname.pce\relax%
+    \immediate\write\pnotes@endslideout{\theframenumber}%
+    \immediate\closeout\pnotes@endslideout%
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \Finale
