@@ -30,11 +30,16 @@
 \RequirePackage{xstring}
 \RequirePackage{ifthen}
 \RequirePackage{kvoptions}
+\RequirePackage{expl3}
 
 \DeclareStringOption[0]{duration}
 \DeclareStringOption[0]{endslide}
 \DeclareStringOption[.]{outputdir}
 \ProcessKeyvalOptions*
+
+\ExplSyntaxOn
+\cs_new_eq:NN \trimspaces \tl_trim_spaces:n
+\ExplSyntaxOff
 
 \newwrite\pnotes@output
 \newwrite\pnotes@endslideout
@@ -85,7 +90,7 @@
     \StrLen{\pnotes@first}[\pnotes@lenFrist]%
     \StrLen{\pnotes@rest}[\pnotes@lenRest]%
     \whiledo{\pnotes@lenFrist > 0 \OR \pnotes@lenRest > 0}{%
-        \immediate\write\pnotes@output{- \pnotes@first}%
+        \immediate\write\pnotes@output{- \expandafter\trimspaces\pnotes@first}%
         \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
         \StrLen{\pnotes@first}[\pnotes@lenFrist]%
         \StrLen{\pnotes@rest}[\pnotes@lenRest]%

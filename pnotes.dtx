@@ -69,11 +69,12 @@
 %
 % \section{Implementation}
 
-% We first need to import three packages for string manipulation, easier conditionals and key-value options.
+% We first need to import three packages for string manipulation, easier conditionals, key-value options and trimming whitespace.
 %    \begin{macrocode}
 \RequirePackage{xstring}
 \RequirePackage{ifthen}
 \RequirePackage{kvoptions}
+\RequirePackage{expl3}
 %    \end{macrocode}
 
 % \subsection{Package options}
@@ -90,6 +91,15 @@
 \DeclareStringOption[0]{endslide}
 \DeclareStringOption[.]{outputdir}
 \ProcessKeyvalOptions*
+%    \end{macrocode}
+
+% \subsection{Whitespace trimming}
+% We define some functionality to trim whitespaces to be used when writing the notes to the file.
+% The code comes from \TeX{} Stack Exchange\footnote{\url{https://tex.stackexchange.com/a/69771}}, written by Joseph Wright\footnote{\url{https://tex.stackexchange.com/users/73/joseph-wright}}.
+%    \begin{macrocode}
+\ExplSyntaxOn
+\cs_new_eq:NN \trimspaces \tl_trim_spaces:n
+\ExplSyntaxOff
 %    \end{macrocode}
 
 % \subsection{External files}
@@ -201,7 +211,7 @@
 % While there is still something left to output we output the first part and then split the rest up just like before.
 %    \begin{macrocode}
     \whiledo{\pnotes@lenFrist > 0 \OR \pnotes@lenRest > 0}{%
-        \immediate\write\pnotes@output{- \pnotes@first}%
+        \immediate\write\pnotes@output{- \expandafter\trimspaces\pnotes@first}%
         \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
         \StrLen{\pnotes@first}[\pnotes@lenFrist]%
         \StrLen{\pnotes@rest}[\pnotes@lenRest]%
