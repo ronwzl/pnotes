@@ -12,7 +12,7 @@
 
 % \iffalse
 %<package>\NeedsTeXFormat{LaTeX2e}[1994/06/01]
-%<package>\ProvidesPackage{pnotes}[2016/01/18 v1.1 pdfpc presentation notes]
+%<package>\ProvidesPackage{pnotes}[2016/01/27 v1.2 pdfpc presentation notes]
 %<*driver>
 \documentclass[a4paper]{ltxdoc}
 \usepackage{pnotes}
@@ -45,6 +45,7 @@
 % \changes{v0.1}{2014/11/02}{Initial version}
 % \changes{v1.0}{2016/01/17}{Create .dtx and .ins file}
 % \changes{v1.1}{2016/01/18}{Add all authors to documentation}
+% \changes{v1.2}{2016/01/27}{Remove \texttt{iconv} call; completely trim all whitespaces}
 
 % \GetFileInfo{pnotes.sty}
 
@@ -157,11 +158,10 @@
 }
 %    \end{macrocode}
 
-% At the end of the \LaTeX{} file we close the \textsf{pdfpc} file and convert it to UTF-8.
+% At the end of the \LaTeX{} file we close the \textsf{pdfpc} file.
 %    \begin{macrocode}
 \AtEndDocument{%
     \immediate\closeout\pnotes@output%
-    \immediate\write18{iconv --output="\pnotes@outputdir/\jobname.pdfpc" --from-code=ISO_8859-15 --to-code=UTF-8 "\pnotes@outputdir/\jobname.pdfpc"}%
 }
 %    \end{macrocode}
 
@@ -208,10 +208,10 @@
     \StrLen{\pnotes@rest}[\pnotes@lenRest]%
 %    \end{macrocode}
 %
-% While there is still something left to output we output the first part and then split the rest up just like before.
+% While there is still something left to output we output the first part (with trimmed whitespace) and then split the rest up just like before.
 %    \begin{macrocode}
     \whiledo{\pnotes@lenFrist > 0 \OR \pnotes@lenRest > 0}{%
-        \immediate\write\pnotes@output{- \expandafter\trimspaces\pnotes@first}%
+        \immediate\write\pnotes@output{- \expandafter\trimspaces\expandafter{\pnotes@first}}%
         \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
         \StrLen{\pnotes@first}[\pnotes@lenFrist]%
         \StrLen{\pnotes@rest}[\pnotes@lenRest]%
