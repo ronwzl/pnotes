@@ -57,8 +57,10 @@
 
 % \maketitle
 
+% \newcommand{\pdfpc}{\textsf{pdfpc}}
+
 % \begin{abstract}
-% When writing \LaTeX{} presentations with the \textsf{beamer} class and displaying them with the \textsf{pdfpc}\footnote{\url{https://pdfpc.github.io/}} tool one wants to be able to add meta information to the \LaTeX{} source which is then displayed inside \textsf{pdfpc}.
+% When writing \LaTeX{} presentations with the \textsf{beamer} class and displaying them with the \pdfpc\footnote{\url{https://pdfpc.github.io/}} tool one wants to be able to add meta information to the \LaTeX{} source which is then displayed inside \pdfpc.
 % This package aims to close exactly this gap.
 % \end{abstract}
 
@@ -81,7 +83,7 @@
 
 % \subsection{Package options}
 % The package accepts four different options.
-% First of all you can set the desired presentation \meta{duration}  which is used by \textsf{pdfpc} to display a timer counting down instead of up.
+% First of all you can set the desired presentation \meta{duration}  which is used by \pdfpc{} to display a timer counting down instead of up.
 %
 % The second option is to specify an \meta{endslide} that is the number of the slide which should be treated as the last one.
 % This should usually not be encoded directly but determined dynamically by using |\plastslide| in the corresponding frame.
@@ -89,7 +91,7 @@
 % The third option specifies the \meta{outputdir}, the folder all the temporary files are written to by the \LaTeX{} compiler.
 % Since there is no automatic way of determining this it must be given if it differs from the standard which is the current directory.
 %
-% As a fourth option we can specify the \meta{fontsize} at which the help text should be displayed by \textsf{pdfpc}.
+% As a fourth option we can specify the \meta{fontsize} at which the help text should be displayed by \pdfpc.
 %    \begin{macrocode}
 \DeclareStringOption[0]{duration}
 \DeclareStringOption[0]{endslide}
@@ -108,14 +110,14 @@
 %    \end{macrocode}
 
 % \subsection{External files}
-% Since we are going to write a \textsf{pdfpc} file and an additional help file we need some file handles.
+% Since we are going to write a \pdfpc{} file and an additional help file we need some file handles.
 %    \begin{macrocode}
 \newwrite\pnotes@output
 \newwrite\pnotes@endslideout
 \newread\pnotes@endslidein
 %    \end{macrocode}
 
-% Before the document actually starts we open the \textsf{pdfpc} file handle.
+% Before the document actually starts we open the \pdfpc{} file handle.
 %    \begin{macrocode}
 \AtBeginDocument{%
     \immediate\openout\pnotes@output\jobname.pdfpc\relax%
@@ -170,7 +172,7 @@
 }
 %    \end{macrocode}
 
-% At the end of the \LaTeX{} file we close the \textsf{pdfpc} file.
+% At the end of the \LaTeX{} file we close the \pdfpc{} file.
 %    \begin{macrocode}
 \AtEndDocument{%
     \immediate\closeout\pnotes@output%
@@ -188,7 +190,7 @@
 %    \end{macrocode}
 
 % \subsection{Counters}
-% Since \textsf{pdfpc} does not work with multiple slide starts of the same slide number we need one counter to remember the last slide we wrote some comments.
+% Since \pdfpc{} does not work with multiple slide starts of the same slide number we need one counter to remember the last slide we wrote some comments.
 %    \begin{macrocode}
 \newcount\pnotes@lastframe
 \pnotes@lastframe=0
@@ -249,7 +251,7 @@
 
 % \begin{macro}{\plastslide}
 % This macro should be put on the last regular slide.
-% It is then output as the last slide for \textsf{pdfpc}.
+% It is then output as the last slide for \pdfpc.
 %    \begin{macrocode}
 \newcommand{\plastslide}{%
     \immediate\openout\pnotes@endslideout\jobname.pce\relax%
