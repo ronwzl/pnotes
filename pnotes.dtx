@@ -12,7 +12,7 @@
 
 % \iffalse
 %<package>\NeedsTeXFormat{LaTeX2e}[1994/06/01]
-%<package>\ProvidesPackage{pnotes}[2016/01/30 v1.3 pdfpc presentation notes]
+%<package>\ProvidesPackage{pnotes}[2017/03/23 v1.4 pdfpc presentation notes]
 %<*driver>
 \documentclass[a4paper]{ltxdoc}
 \usepackage{pnotes}
@@ -47,6 +47,7 @@
 % \changes{v1.1}{2016/01/18}{Add all authors to documentation}
 % \changes{v1.2}{2016/01/27}{Remove \texttt{iconv} call; completely trim all whitespaces}
 % \changes{v1.3}{2016/01/30}{Add \meta{fontsize} package option}
+% \changes{v1.4}{2017/03/23}{Remove leading hyphen on otherwise empty lines. Close input file. Rewrite output procedure with other macros.}
 
 % \GetFileInfo{pnotes.sty}
 
@@ -67,18 +68,22 @@
 % \section{Contributions and License}
 % This package's code is originally based on an answer on \TeX{} Stack Exchange\footnote{\url{https://tex.stackexchange.com/a/119267}} by user cebe\footnote{\url{https://tex.stackexchange.com/users/10327/cebe}} published under the Creative Commons Attribution-ShareAlike 3.0 license\footnote{\url{https://creativecommons.org/licenses/by-sa/3.0/}} (CC BY-SA 3.0).
 
-% First versions were co-developed with rwen32\footnote{\url{https://github.com/rwen32}}, some improvements were suggested by kaueraal\footnote{\url{https://github.com/kaueraal}}.
+% First versions were co-developed with ronwzl\footnote{\url{https://github.com/ronwzl}}, some improvements were suggested by kaueraal\footnote{\url{https://github.com/kaueraal}}.
 
 % \StopEventually{\PrintChanges\PrintIndex}
 %
 % \section{Implementation}
 
-% We first need to import three packages for string manipulation, easier conditionals, key-value options and trimming whitespace.
+% We first need to import four packages.
+% |xstring| is used to replace paragraph breaks by line breaks and to split the string into pieces.
+% |kvoptions| is used for the package options.
+% |expl3| is used for the |\pnotes@trimspaces| macro.
+% Finally, |etoolbox| is used for loops and conditional expressions.
 %    \begin{macrocode}
 \RequirePackage{xstring}
-\RequirePackage{ifthen}
 \RequirePackage{kvoptions}
 \RequirePackage{expl3}
+\RequirePackage{etoolbox}
 %    \end{macrocode}
 
 % \subsection{Package options}
@@ -105,7 +110,7 @@
 % The code comes from \TeX{} Stack Exchange\footnote{\url{https://tex.stackexchange.com/a/69771}}, written by Joseph Wright\footnote{\url{https://tex.stackexchange.com/users/73/joseph-wright}}.
 %    \begin{macrocode}
 \ExplSyntaxOn
-\cs_new_eq:NN \trimspaces \tl_trim_spaces:n
+\cs_new_eq:NN \pnotes@trimspaces \tl_trim_spaces:n
 \ExplSyntaxOff
 %    \end{macrocode}
 
@@ -162,6 +167,7 @@
             \immediate\read\pnotes@endslidein to \pnotes@endslide%
             \immediate\write\pnotes@output{[end_user_slide]}%
             \immediate\write\pnotes@output{\pnotes@endslide}%
+            \immediate\closein\pnotes@endslidein%
         }{}%
     \fi%
 %    \end{macrocode}
@@ -202,7 +208,7 @@
 \newcommand{\pnote@writenote}[1]{%
 %    \end{macrocode}
 %
-% Only write the current slide number iff it changed since the last write.
+% Only write the current slide number if it changed since the last write.
 %    \begin{macrocode}
     \ifnum\value{framenumber}=\pnotes@lastframe\else%
         \immediate\write\pnotes@output{\pnotes@slidestart\theframenumber}%
@@ -215,20 +221,35 @@
     \StrSubstitute{\unexpanded{#1}}{\unexpanded{\par}}{\unexpanded{\\\\}}[\pnotes@rest]%
 %    \end{macrocode}
 %
-% Split the text at the first line break and record the length of both parts.
+% Split the text at the first line break.
 %    \begin{macrocode}
     \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
-    \StrLen{\pnotes@first}[\pnotes@lenFrist]%
-    \StrLen{\pnotes@rest}[\pnotes@lenRest]%
 %    \end{macrocode}
 %
-% While there is still something left to output we output the first part (with trimmed whitespace) and then split the rest up just like before.
+% Loop as long either the first or the second part contain something.
 %    \begin{macrocode}
-    \whiledo{\pnotes@lenFrist > 0 \OR \pnotes@lenRest > 0}{%
-        \immediate\write\pnotes@output{- \expandafter\trimspaces\expandafter{\pnotes@first}}%
+    \whileboolexpr{
+        not test {\ifdefempty{\pnotes@first}}
+        or
+        not test {\ifdefempty{\pnotes@rest}}
+    }{%
+%    \end{macrocode}
+%
+% If the first part is empty, we only output a new line.
+% Otherwise we trim the whitespace and output the line with a leading |"- "|.
+%    \begin{macrocode}
+        \ifdefempty{\pnotes@first}{%
+            \immediate\write\pnotes@output{}%
+        }{%
+            \immediate\write\pnotes@output{%
+                - \expandafter\pnotes@trimspaces\expandafter{\pnotes@first}%
+            }%
+        }%
+%    \end{macrocode}
+%
+% Repeat the text splitting for the next loop.
+%    \begin{macrocode}
         \StrCut{\pnotes@rest}{\unexpanded{\\}}\pnotes@first\pnotes@rest%
-        \StrLen{\pnotes@first}[\pnotes@lenFrist]%
-        \StrLen{\pnotes@rest}[\pnotes@lenRest]%
     }%
 %    \end{macrocode}
 %
